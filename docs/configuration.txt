@@ -22,9 +22,11 @@ number of places you might want to configure.
         'PRODUCT_SLUG': 'items',
     }
 
-The following settings can be added to the ``SATCHMO_SETTINGS`` dictionary:
+ Satchmo recognises the following keys in ``SATCHMO_SETTINGS``:
 
-.. data:: SATCHMO_SETTINGS.SHOP_BASE
+  .. _satchmo_settings_shop_base:
+
+  ``'SHOP_BASE'``
 
     :default: ``'/shop'``
 
@@ -34,55 +36,73 @@ The following settings can be added to the ``SATCHMO_SETTINGS`` dictionary:
     to do it.  If you would like your store to be at the root of the url, set this to
     ``""``.
 
-.. data:: SATCHMO_SETTINGS.SHOP_URLS
+  .. _satchmo_settings_shop_urls:
+
+  ``'SHOP_URLS'``
 
     :default: ``[]``
 
     .. TODO documentation needed.
 
-.. data:: SATCHMO_SETTINGS.MULTISHOP
+  .. _satchmo_settings_multishop:
+
+  ``'MULTISHOP'``
 
     :default: ``False``
 
     A boolean used to enable to disable multi store capability.
 
-.. data:: SATCHMO_SETTINGS.CUSTOM_NEWSLETTER_MODULES
+  .. _satchmo_settings_custom_newsletter_modules:
+
+  ``'CUSTOM_NEWSLETTER_MODULES'``
 
     :default: ``[]``
 
     A list of custom newsletters.
 
-.. data:: SATCHMO_SETTINGS.CUSTOM_SHIPPING_MODULES
+  .. _satchmo_settings_custom_shipping_modules:
+
+  ``'CUSTOM_SHIPPING_MODULES'``
 
     :default: ``[]``
 
     A list of custom shipping modules outside of the standard Satchmo distribution.
 
-.. data:: SATCHMO_SETTINGS.CUSTOM_PRODUCT_MODULES
+  .. _satchmo_settings_custom_product_modules:
+
+  ``'CUSTOM_PRODUCT_MODULES'``
 
     :default: ``[]``
 
     A list of custom product modules outside of the standard Satchmo distribution.
 
-.. data:: SATCHMO_SETTINGS.CUSTOM_TAX_MODULES
+  .. _satchmo_settings_custom_tax_modules:
+
+  ``'CUSTOM_TAX_MODULES'``
 
     :default: ``[]``
 
     A list of custom tax modules outside of the standard Satchmo distribution.
 
-.. data:: SATCHMO_SETTINGS.COOKIE_MAX_SECONDS
+  .. _satchmo_settings_cookie_max_seconds:
+
+  ``'COOKIE_MAX_SECONDS'``
 
     :default: ``60*60*24*30``
 
     Cookie expiration time.
 
-.. data:: SATCHMO_SETTINGS.CATEGORY_SLUG
+  .. _satchmo_settings_category_slug:
+
+  ``'CATEGORY_SLUG'``
 
     :default: ``'category'``
 
     The prefix used for category urls; see :data:`satchmo_category` and :data:`satchmo_category_index`.
 
-.. data:: SATCHMO_SETTINGS.PRODUCT_SLUG
+  .. _satchmo_settings_product_slug:
+
+  ``'PRODUCT_SLUG'``
 
     :default: ``'product'``
 
@@ -296,25 +316,31 @@ below would configure the Euro::
       'allow_translations': False,
     }
 
-The following settings are available to be added to the ``L10N_SETTINGS`` dictionary:
+Satchmo recognises the following keys in ``L10N_SETTINGS``:
 
-.. data:: L10N_SETTINGS.default_currency
+  .. _l10n_settings_default_currency:
 
-   The default currency type to display.
+  ``'default_currency'``
 
-.. data:: L10N_SETTINGS.show_translations
+    The default currency type to display.
 
-   :default: ``True``
+  .. _l10n_settings_show_translations:
 
-   Enable or disable the use of the translation options in the admin.
+  ``'show_translations'``
 
-.. data:: L10N_SETTINGS.allow_translations
+    :default: ``True``
 
-   :default: ``True``
+    Enable or disable the use of the translation options in the admin.
 
-   Enable or disable the translation section for the store user.
+  .. _l10n_settings_allow_translations:
 
+  ``'allow_translations'``
 
+    :default: ``True``
+
+    Enable or disable the translation section for the store user.
+
+  .. TODO this seems to repeat one of the above options, but I'm not sure which.
 
 The ``L10N_SETTINGS`` variable also allows you to control whether or not translation fields
 should be displayed in the admin. In the example above, they will be disabled. The default is ``True``
