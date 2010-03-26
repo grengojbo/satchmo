@@ -16,7 +16,7 @@ def _delete(sender, instance=None, **kwargs):
                 remove_model_thumbnails(instance)
         else:
             remove_model_thumbnails(instance)
-        
+
 def upload_dir(instance, filename):
     raw = "images/"
 
@@ -26,12 +26,12 @@ def upload_dir(instance, filename):
         pass
     except ImportError, e:
         log.warn("Error getting upload_dir, OK if you are in SyncDB.")
-        
+
     updir = normalize_dir(raw)
     return os.path.join(updir, filename)
-        
 
-NOTSET = object()
+
+NOTSET = None
 
 class ImageWithThumbnailField(ImageField):
     """ ImageField with thumbnail support
@@ -43,9 +43,9 @@ class ImageWithThumbnailField(ImageField):
 
     def __init__(self, verbose_name=None, name=None,
                  width_field=None, height_field=None,
-                 auto_rename=NOTSET, name_field=None, 
+                 auto_rename=NOTSET, name_field=None,
                  upload_to=upload_dir, **kwargs):
-                 
+
         self.auto_rename = auto_rename
 
         self.width_field, self.height_field = width_field, height_field
@@ -57,7 +57,7 @@ class ImageWithThumbnailField(ImageField):
                                                       **kwargs)
         self.name_field = name_field
         self.auto_rename = auto_rename
-        
+
     def _save_rename(self, instance, **kwargs):
         if hasattr(self, '_renaming') and self._renaming:
             return
@@ -66,7 +66,7 @@ class ImageWithThumbnailField(ImageField):
                 self.auto_rename = config_value('THUMBNAIL', 'RENAME_IMAGES')
             except SettingNotSet:
                 self.auto_rename = False
-        
+
         image = getattr(instance, self.attname)
         if image and self.auto_rename:
             if self.name_field:
@@ -95,3 +95,18 @@ class ImageWithThumbnailField(ImageField):
         signals.pre_delete.connect(_delete, sender=cls)
         signals.post_save.connect(self._save_rename, sender=cls)
 
+try:
+    # South introspection rules for our custom field.
+    from south.modelsinspector import add_introspection_rules
+
+    add_introspection_rules([(
+        (ImageWithThumbnailField, ),
+        [],
+        {
+            'auto_rename': ["auto_rename", {"default": None}],
+            'name_field': ["name_field", {"default": None}],
+            'auto_rename': ["auto_rename", {"default": None}],
+        },
+    )], ['satchmo_utils\.thumbnail\.field'])
+except ImportError:
+    pass
