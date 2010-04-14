@@ -1,17 +1,13 @@
 """
 Stores customer, organization, and order information.
 """
-from django.conf import settings
 from django.contrib.auth.models import User
-from django.core import urlresolvers
 from django.db import models
 from django.utils.translation import ugettext, ugettext_lazy as _
-from livesettings import config_get_group
 from l10n.models import Country
 from satchmo_store.contact import CUSTOMER_ID
 import datetime
 import logging
-import sys
 
 log = logging.getLogger('contact.models')
 
@@ -29,7 +25,7 @@ class ContactOrganization(models.Model):
 
     def __unicode__(self):
         return ugettext(self.name)
-        
+
     class Meta:
         verbose_name = _('Contact organization type')
 
@@ -50,12 +46,12 @@ class ContactInteractionType(models.Model):
 
 
 class OrganizationManager(models.Manager):
-    def by_name(self, name, create=False, role='Customer', orgtype='Company'):        
+    def by_name(self, name, create=False, role='Customer', orgtype='Company'):
         org = None
         orgs = self.filter(name=name, role__key=role, type__key=orgtype)
         if orgs.count() > 0:
             org = orgs[0]
-            
+
         if not org:
             if not create:
                 raise Organization.DoesNotExist()
@@ -65,7 +61,7 @@ class OrganizationManager(models.Manager):
                 orgtype = ContactOrganization.objects.get(pk=orgtype)
                 org = Organization(name=name, role=role, type=orgtype)
                 org.save()
-        
+
         return org
 
 class Organization(models.Model):
@@ -74,20 +70,20 @@ class Organization(models.Model):
     """
     name = models.CharField(_("Name"), max_length=50, )
     type = models.ForeignKey(ContactOrganization, verbose_name=_("Type"), null=True)
-    role = models.ForeignKey(ContactOrganizationRole, verbose_name=_("Role"), null=True)    
+    role = models.ForeignKey(ContactOrganizationRole, verbose_name=_("Role"), null=True)
     create_date = models.DateField(_("Creation Date"))
     notes = models.TextField(_("Notes"), max_length=200, blank=True, null=True)
 
     objects = OrganizationManager()
-    
+
     def __unicode__(self):
         return self.name
 
-    def save(self, force_insert=False, force_update=False):
+    def save(self, **kwargs):
         """Ensure we have a create_date before saving the first time."""
         if not self.pk:
             self.create_date = datetime.date.today()
-        super(Organization, self).save(force_insert=force_insert, force_update=force_update)
+        super(Organization, self).save(**kwargs)
 
     class Meta:
         verbose_name = _("Organization")
@@ -108,7 +104,7 @@ class ContactManager(models.Manager):
                 contact = Contact.objects.get(id=request.session[CUSTOMER_ID])
             except Contact.DoesNotExist:
                 del request.session[CUSTOMER_ID]
-            
+
         if contact is None and request.user.is_authenticated():
             try:
                 contact = Contact.objects.get(user=request.user.id)
@@ -138,7 +134,7 @@ class Contact(models.Model):
     first_name = models.CharField(_("First name"), max_length=30, )
     last_name = models.CharField(_("Last name"), max_length=30, )
     user = models.ForeignKey(User, blank=True, null=True, unique=True)
-    role = models.ForeignKey(ContactRole, verbose_name=_("Role"), null=True)    
+    role = models.ForeignKey(ContactRole, verbose_name=_("Role"), null=True)
     organization = models.ForeignKey(Organization, verbose_name=_("Organization"), blank=True, null=True)
     dob = models.DateField(_("Date of birth"), blank=True, null=True)
     email = models.EmailField(_("Email"), blank=True, max_length=75)
@@ -179,7 +175,7 @@ class Contact(models.Model):
     def __unicode__(self):
         return self.full_name
 
-    def save(self, force_insert=False, force_update=False):
+    def save(self, **kwargs):
         """Ensure we have a create_date before saving the first time."""
         if not self.pk:
             self.create_date = datetime.date.today()
@@ -190,7 +186,7 @@ class Contact(models.Model):
             if user.email != self.email:
                 user.email = self.email
                 dirty = True
-            
+
             if user.first_name != self.first_name:
                 user.first_name = self.first_name
                 dirty = True
@@ -198,16 +194,16 @@ class Contact(models.Model):
             if user.last_name != self.last_name:
                 user.last_name = self.last_name
                 dirty = True
-                
+
             if dirty:
                 self.user = user
                 self.user.save()
 
-        super(Contact, self).save(force_insert=force_insert, force_update=force_update)
+        super(Contact, self).save(**kwargs)
 
     class Meta:
         verbose_name = _("Contact")
-        verbose_name_plural = _("Contacts")        
+        verbose_name_plural = _("Contacts")
 
 PHONE_CHOICES = (
     ('Work', _('Work')),
@@ -247,7 +243,7 @@ class PhoneNumber(models.Model):
     def __unicode__(self):
         return u'%s - %s' % (self.type, self.phone)
 
-    def save(self, force_insert=False, force_update=False):
+    def save(self, **kwargs):
         """
         If this number is the default, then make sure that it is the only
         primary phone number. If there is no existing default, then make
@@ -260,7 +256,7 @@ class PhoneNumber(models.Model):
                 super(PhoneNumber, existing_number).save()
         else:
             self.primary = True
-        super(PhoneNumber, self).save(force_insert=force_insert, force_update=force_update)
+        super(PhoneNumber, self).save(**kwargs)
 
     class Meta:
         ordering = ['-primary']
@@ -289,7 +285,7 @@ class AddressBook(models.Model):
     def __unicode__(self):
        return u'%s - %s' % (self.contact.full_name, self.description)
 
-    def save(self, force_insert=False, force_update=False):
+    def save(self, **kwargs):
         """
         If this address is the default billing or shipping address, then
         remove the old address's default status. If there is no existing
@@ -311,7 +307,7 @@ class AddressBook(models.Model):
         else:
             self.is_default_shipping = True
 
-        super(AddressBook, self).save(force_insert=force_insert, force_update=force_update)
+        super(AddressBook, self).save(**kwargs)
 
     class Meta:
         verbose_name = _("Address Book")

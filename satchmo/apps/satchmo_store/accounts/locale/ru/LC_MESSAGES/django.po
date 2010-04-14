@@ -7,60 +7,63 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Satchmo\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-31 00:49-0600\n"
+"POT-Creation-Date: 2010-04-07 13:30+0300\n"
 "PO-Revision-Date: 2009-03-05 03:05+0300\n"
 "Last-Translator: Данил Семеленов <danil.mail@gmail.com>\n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language-Team: \n"
 
-#: views.py:22
-msgid "Yes"
-msgstr ""
+#: .\forms.py:31
+msgid "Title"
+msgstr "Обращение"
 
-#: views.py:23
-msgid "No"
-msgstr ""
-
-#: views.py:28
+#: .\forms.py:32
 msgid "Email address"
-msgstr ""
+msgstr "Адресс электронной почты"
 
-#: views.py:29
+#: .\forms.py:34
 msgid "Password (again)"
-msgstr ""
+msgstr "Пароль (снова)"
 
-#: views.py:30
+#: .\forms.py:36
 msgid "Password"
-msgstr ""
+msgstr "Пароль"
 
-#: views.py:31
+#: .\forms.py:38
 msgid "First name"
 msgstr "Имя"
 
-#: views.py:32
+#: .\forms.py:40
 msgid "Last name"
 msgstr "Фамилия"
 
-#: views.py:33
+#: .\forms.py:59
 msgid "Newsletter"
-msgstr "Новосная рассылка"
+msgstr "Новостная рассылка"
 
-#: views.py:40
+#: .\forms.py:68
 msgid "The two passwords do not match."
 msgstr "Пароли не совпадают."
 
-#: views.py:49
+#: .\forms.py:79
 msgid "That email address is already in use."
 msgstr "Этот адрес электронной почты уже используется."
 
-#: views.py:57
-#, python-format
-msgid "Welcome to %s"
+#: .\mail.py:17
+#, fuzzy, python-format
+msgid "Welcome to %(shop_name)s"
 msgstr "Добро пожаловать в %s"
 
-#: views.py:180
+#: .\views.py:24
+msgid "Yes"
+msgstr "Да"
+
+#: .\views.py:25
+msgid "No"
+msgstr "Нет"
+
+#: .\views.py:341
 msgid "Registration Form"
 msgstr "Форма регистрации"
-

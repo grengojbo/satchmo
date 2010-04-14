@@ -1,10 +1,7 @@
 from decimal import Decimal, InvalidOperation
 from django import template
-from django.conf import settings
-from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from l10n.utils import moneyfmt
-from livesettings import config_value
 from satchmo_utils.templatetags import get_filter_args
 
 import logging
@@ -25,11 +22,11 @@ def currency(value, args=""):
         val|currency:'places=2'
         val|currency:'places=2:wrapcents=sup'
     """
-    
+
     if value == '' or value is None:
         return value
 
-    args, kwargs = get_filter_args(args, 
+    args, kwargs = get_filter_args(args,
         keywords=('places','curr', 'wrapcents'),
         intargs=('places',), stripquotes=True)
 
@@ -38,10 +35,7 @@ def currency(value, args=""):
     except InvalidOperation:
         log.error("Could not convert value '%s' to decimal", value)
         raise
-        
-    if not 'places' in kwargs:
-        kwargs['places'] = 2
-        
+
     return mark_safe(moneyfmt(value, **kwargs))
 
 register.filter('currency', currency)

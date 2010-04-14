@@ -2,14 +2,12 @@ from decimal import Decimal
 from django.contrib.sites.models import Site
 from livesettings import config_value
 from l10n.utils import moneyfmt
-from product.models import ProductVariation, Option, split_option_unique_id, \
-                                   ProductPriceLookup, OptionGroup, Discount, \
-                                   NullDiscount, Product
-from satchmo_utils.numbers import RoundedDecimalError, round_decimal
+from product.models import Option, ProductPriceLookup, OptionGroup, Discount, Product, split_option_unique_id
+from satchmo_utils.numbers import round_decimal
 import datetime
 import logging
 import types
-
+import string
 
 log = logging.getLogger('product.utils')
 
@@ -29,7 +27,7 @@ def find_auto_discounts(product):
         product = (product,)
     today = datetime.date.today()
     discs = Discount.objects.filter(automatic=True, active=True, startDate__lte=today, endDate__gt=today)
-    return discs.filter(validProducts__in=product).order_by('-percentage')
+    return discs.filter(valid_products__in=product).order_by('-percentage')
 
 def find_best_auto_discount(product):
     discs = find_auto_discounts(product)
@@ -64,9 +62,6 @@ def productvariation_details(product, include_tax, user, create=False):
         tax_class = product.taxClass
 
     details = {'SALE' : use_discount}
-    
-    curr = config_value('LANGUAGE','CURRENCY')
-    curr = curr.replace("_", " ")
 
     variations = ProductPriceLookup.objects.filter(parentid=product.id).order_by("-price")
     if variations.count() == 0:
@@ -95,47 +90,47 @@ def productvariation_details(product, include_tax, user, create=False):
             detail['QTY'] = round_decimal(qty)
 
             detail['PRICE'] = {}
-            
+
             if use_discount:
                 detail['SALE'] = {}
-                
+
             if include_tax:
                 detail['TAXED'] = {}
                 if use_discount:
                     detail['TAXED_SALE'] = {}
-                
+
             details[key] = detail
 
         qtykey = "%d" % detl.quantity
-        
+
         price = detl.dynamic_price
-        
-        detail['PRICE'][qtykey] = moneyfmt(price, curr=curr)
+
+        detail['PRICE'][qtykey] = moneyfmt(price)
         if use_discount:
-            detail['SALE'][qtykey] = moneyfmt(calc_discounted_by_percentage(price, discount.percentage), curr=curr)
-        
+            detail['SALE'][qtykey] = moneyfmt(calc_discounted_by_percentage(price, discount.percentage))
+
         if include_tax:
             tax_price = taxer.by_price(tax_class, price) + price
-            detail['TAXED'][qtykey] = moneyfmt(tax_price, curr=curr)
+            detail['TAXED'][qtykey] = moneyfmt(tax_price)
             if use_discount:
-                detail['TAXED_SALE'][qtykey] = moneyfmt(calc_discounted_by_percentage(tax_price, discount.percentage), curr=curr)
-                
+                detail['TAXED_SALE'][qtykey] = moneyfmt(calc_discounted_by_percentage(tax_price, discount.percentage))
+
     return details
-    
+
 def rebuild_pricing():
     site = Site.objects.get_current()
     for lookup in ProductPriceLookup.objects.filter(siteid=site.id):
         lookup.delete()
-    
+
     products = Product.objects.active_by_site(site=site, variations=False)
-    
+
     productct = products.count()
     pricect = 0
-    
-    for product in products:        
+
+    for product in products:
         prices = ProductPriceLookup.objects.smart_create_for_product(product)
         pricect += len(prices)
-    
+
     return productct, pricect
 
 def serialize_options(product, selected_options=()):
@@ -163,7 +158,7 @@ def serialize_options(product, selected_options=()):
     color and size, and you have a yellow/large, a yellow/small, and a
     white/small, but you have no white/large - the customer will still see
     the options white and large.
-    """    
+    """
     all_options = product.get_valid_options()
     group_sortmap = OptionGroup.objects.get_sortmap()
 
@@ -171,13 +166,13 @@ def serialize_options(product, selected_options=()):
     # right now we only have a list of option.unique_ids, and there are
     # probably a lot of dupes, so first list them uniquely
     values = []
-    
+
     if all_options != [[]]:
         vals = {}
         groups = {}
         opts = {}
         serialized = {}
-        
+
         for options in all_options:
             for option in options:
                 if not opts.has_key(option):
@@ -185,7 +180,7 @@ def serialize_options(product, selected_options=()):
                     vals[v] = False
                     groups[k] = False
                     opts[option] = None
-        
+
         for option in Option.objects.filter(option_group__id__in = groups.keys(), value__in = vals.keys()):
             uid = option.unique_id
             if opts.has_key(uid):
@@ -197,6 +192,7 @@ def serialize_options(product, selected_options=()):
             if not serialized.has_key(option.option_group_id):
                 serialized[option.option_group.id] = {
                     'name': option.option_group.translated_name(),
+                    'description': option.option_group.translated_description(),
                     'id': option.option_group.id,
                     'items': [],
                 }
@@ -207,7 +203,7 @@ def serialize_options(product, selected_options=()):
         # first sort the option groups
         for k, v in serialized.items():
             values.append((group_sortmap[k], v))
-        
+
         if values:
             values.sort()
             values = zip(*values)[1]
@@ -215,14 +211,70 @@ def serialize_options(product, selected_options=()):
         #now go back and make sure option items are sorted properly.
         for v in values:
             v['items'] = _sort_options(v['items'])
-    
+
     log.debug('serialized: %s', values)
-    
+
     log.debug('Serialized Options %s: %s', product.product.slug, values)
     return values
 
 def _sort_options(lst):
-    work = [(opt.sort_order, opt) for opt in lst] 
+    work = [(opt.sort_order, opt) for opt in lst]
     work.sort()
     return zip(*work)[1]
-    
+
+# All the functions below are used to validate custom attributes
+# associated with a product or category.
+# Custom ones can be added to the list via the admin setting ATTRIBUTE_VALIDATION
+
+
+def validation_simple(value, obj=None):
+    """
+    Validates that at least one character has been entered.
+    Not change is made to the value.
+    """
+    if len(value) > 1:
+        return True, value
+    else:
+        return False, value
+
+def validation_integer(value, obj=None):
+    """
+   Validates that value is an integer number.
+   No change is made to the value
+    """
+    try:
+        check = int(value)
+        return True, value
+    except:
+        return False, value
+
+def validation_yesno(value, obj=None):
+    """
+    Validates that yes or no is entered.
+    Converts the yes or no to capitalized version
+    """
+    if string.upper(value) in ["YES","NO"]:
+        return True, string.capitalize(value)
+    else:
+        return False, value
+
+def validation_decimal(value, obj=None):
+    """
+    Validates that the number can be converted to a decimal
+    """
+    try:
+        check = Decimal(value)
+        return True, value
+    except:
+        return False, value
+
+def validate_attribute_value(attribute, value, obj):
+    """
+    Helper function for forms that wish to validation a value for an
+    AttributeOption.
+    """
+    function_name = attribute.validation.split('.')[-1]
+    import_name = '.'.join(attribute.validation.split('.')[:-1])
+    import_module = __import__(import_name, fromlist=[function_name])
+    validation_function = getattr(import_module, function_name)
+    return validation_function(value, obj)

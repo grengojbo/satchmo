@@ -2,12 +2,12 @@ from django import forms
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _, ugettext
 from satchmo_store.accounts.mail import send_welcome_email
 from livesettings import config_value
 from satchmo_store.contact.forms import ContactInfoForm
-from satchmo_store.contact.models import AddressBook, PhoneNumber, Contact, ContactRole
-from l10n.models import Country
+from satchmo_store.contact.models import Contact, ContactRole
 from satchmo_utils.unique_id import generate_id
 from signals_ahoy.signals import form_init, form_initialdata
 
@@ -18,9 +18,9 @@ log = logging.getLogger('accounts.forms')
 
 class EmailAuthenticationForm(AuthenticationForm):
     """Authentication form with a longer username field."""
-    
+
     def __init__(self, *args, **kwargs):
-        
+
         super(EmailAuthenticationForm, self).__init__(*args, **kwargs)
         username = self.fields['username']
         username.max_length = 75
@@ -45,14 +45,14 @@ class RegistrationForm(forms.Form):
         contact = kwargs.get('contact', None)
         initial = kwargs.get('initial', {})
         self.contact = contact
-        form_initialdata.send('RegistrationForm',
+        form_initialdata.send(self.__class__,
             form=self,
             contact=contact,
             initial=initial)
-        
+
         kwargs['initial'] = initial
         super(RegistrationForm, self).__init__(*args, **kwargs)
-        form_init.send('RegistrationForm',
+        form_init.send(self.__class__,
             form=self,
             contact=contact)
 
@@ -102,9 +102,18 @@ class RegistrationForm(forms.Form):
         verify = (config_value('SHOP', 'ACCOUNT_VERIFICATION') == 'EMAIL')
 
         if verify:
+            site = Site.objects.get_current()
             from registration.models import RegistrationProfile
-            user = RegistrationProfile.objects.create_inactive_user(
-                username, password, email, send_email=True)
+            # TODO:
+            # In django-registration trunk this signature has changed.
+            # Satchmo is going to stick with the latest release so I'm changing
+            # this to work with 0.7
+            # When 0.8 comes out we're going to have to refactor to this:
+            #user = RegistrationProfile.objects.create_inactive_user(
+            #    username, email, password, site)
+            # See ticket #1028 where we checked in the above line prematurely
+            user = RegistrationProfile.objects.create_inactive_user(username,
+                    password, email)
         else:
             user = User.objects.create_user(username, email, password)
 
@@ -147,15 +156,15 @@ class RegistrationForm(forms.Form):
 
 class RegistrationAddressForm(RegistrationForm, ContactInfoForm):
     """Registration form which also requires address information."""
-    
+
     def __init__(self, *args, **kwargs):
         super(RegistrationAddressForm, self).__init__(*args, **kwargs)
 
     def save(self, request=None, **kwargs):
         contact = self.save_contact(request)
         kwargs['contact'] = contact
-        
+
         log.debug('Saving address for %s', contact)
         self.save_info(**kwargs)
-                
+
         return contact

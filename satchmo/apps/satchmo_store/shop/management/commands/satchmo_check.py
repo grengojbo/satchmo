@@ -1,7 +1,9 @@
 from django.core.management.base import NoArgsCommand
+from django.core import urlresolvers
 import sys
 import django
 from decimal import Decimal
+import types
 
 class Command(NoArgsCommand):
     help = "Check the system to see if the Satchmo components are installed correctly."
@@ -16,6 +18,8 @@ class Command(NoArgsCommand):
             errors.append("Satchmo is not installed correctly. Please verify satchmo is on your sys path.")
         print "Using Django version %s" % django.get_version()
         print "Using Satchmo version %s" % satchmo_store.get_version()
+        
+        # Try importing all our dependencies
         try:
             import Crypto.Cipher
         except ImportError:
@@ -48,21 +52,29 @@ class Command(NoArgsCommand):
         except ImportError:
             errors.append("Sorl imaging library is not installed.")
         try:
-             from l10n.utils import get_locale_conv
-             get_locale_conv()
-        except:
-            errors.append("""
-            Locale is not set correctly.  Try 
-            Unix: sudo locale-gen en_US  
-            If the above does not work, try
-            sudo localedef -i en_US -f ISO-8859-1 en_US
-            Windows: set LANGUAGE_CODE in settings.py to LANGUAGE_CODE = 'us'
-            """)
+            import app_plugins
+        except ImportError:
+            errors.append("App plugins is not installed.")
+        try:
+            import livesettings
+        except ImportError:
+            errors.append("Livesettings is not installed.")
+        try:
+            import keyedcache
+        except ImportError:
+            errors.append("Keyedcache is not installed.")
         try:
             cache_avail = settings.CACHE_BACKEND
         except AttributeError:
             errors.append("A CACHE_BACKEND must be configured.")
-        
+        # Try looking up a url to see if there's a misconfiguration there    
+        try:
+            url = urlresolvers.reverse('satchmo_search')
+        except Exception, e:
+            errors.append("Unable to resolve url. Received error- %s" % e)
+        from l10n.l10n_settings import get_l10n_default_currency_symbol
+        if not isinstance(get_l10n_default_currency_symbol(),types.UnicodeType):
+            errors.append("Your currency symbol should be a unicode string.")
         if 'satchmo_store.shop.SSLMiddleware.SSLRedirect' not in settings.MIDDLEWARE_CLASSES:
             errors.append("You must have satchmo_store.shop.SSLMiddleware.SSLRedirect in your MIDDLEWARE_CLASSES.")
         if 'satchmo_store.shop.context_processors.settings' not in settings.TEMPLATE_CONTEXT_PROCESSORS:

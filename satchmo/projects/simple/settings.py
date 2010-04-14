@@ -93,6 +93,7 @@ INSTALLED_APPS = (
     'django.contrib.sitemaps',
     'registration',
     'sorl.thumbnail',
+    'south',
     'keyedcache',
     'livesettings',
     'l10n',
@@ -109,12 +110,17 @@ INSTALLED_APPS = (
     #'satchmo_ext.recentlist',
     #'testimonials',
     'product',
+    'product.modules.configurable',
+    #'product.modules.custom',
+    #'product.modules.downloadable',
+    #'product.modules.subscription',
     #'satchmo_ext.product_feeds',
     #'satchmo_ext.brand',
     'payment',
-    #'payment.modules.purchaseorder',
+    'payment.modules.dummy',
+    'payment.modules.paypal',
     #'payment.modules.giftcertificate',
-    #create-'satchmo_ext.wishlist',
+    #'satchmo_ext.wishlist',
     #'satchmo_ext.upsell',
     #'satchmo_ext.productratings',
     'satchmo_ext.satchmo_toolbar',
@@ -137,6 +143,9 @@ AUTHENTICATION_BACKENDS = (
 #    'INTERCEPT_REDIRECTS' : False,
 #}
 
+L10N_SETTINGS = {
+}
+
 #### Satchmo unique variables ####
 #from django.conf.urls.defaults import patterns, include
 SATCHMO_SETTINGS = {
@@ -144,6 +153,8 @@ SATCHMO_SETTINGS = {
     'MULTISHOP' : False,
     #'SHOP_URLS' : patterns('satchmo_store.shop.views',)
 }
+
+SKIP_SOUTH_TESTS=True
 
 # Load the local settings
 from local_settings import *

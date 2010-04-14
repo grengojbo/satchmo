@@ -2,12 +2,110 @@ Satchmo Migrations and Upgrades
 ===============================
 
 The latest list of backwards incompatible changes can always be found here-
-http://www.satchmoproject.com/trac/wiki/BackwardsIncompatibleChanges
+http://bitbucket.org/chris1610/satchmo/wiki/BackwardsIncompatibleChanges
 
-The ideal way to migrate would be to dump all of your existing store data, remove all of your old tables, synch the new models and reload the data.  
+The ideal way to migrate would be to dump all of your existing store data, remove all of your old tables, synch the new models and reload the data.
 If this process is not practical, then follow the individual steps outlined below.
 
-Always remember to do a complete backup of your store before attempting to migrate.  Additionally, we recommend that you test the migration 
+Always remember to do a complete backup of your store before attempting to migrate.  Additionally, we recommend that you test the migration
 on a test server before attempting on a production server.
 
-We hope to add a more automated migration feature in future versions of Satchmo.
+Using South
+-----------
+
+The very latest version of Satchmo includes migration files for
+`South <http://south.aeracode.org/>`_. So far, we only have migrations for the
+``product`` app, with the initial migration based on the 0.9 code base.
+
+The instructions below assume that you have installed South 0.7; you can
+download it from here:
+
+  http://south.aeracode.org/docs/installation.html
+
+Upgrading from 0.9
+^^^^^^^^^^^^^^^^^^
+
+.. highlight:: console
+
+- Download/check out a copy of the new version of Satchmo.
+
+  .. warning:: *Do not* install the new version of Satchmo yet.
+
+- If you aren't already using South for your project, add it to your
+  ``INSTALLED_APPS`` and create the history table::
+
+    $ python manage.py syncdb
+
+    Syncing...
+    Installing yaml fixture 'initial_data' from '/home/user/lib/python2.5/Satchmo-0.9_0-py2.5.egg/satchmo_store/shop/fixtures'.
+    Installing yaml fixture 'initial_data' from '/home/user/lib/python2.5/Satchmo-0.9_0-py2.5.egg/satchmo_store/contact/fixtures'.
+    Installing yaml fixture 'initial_data' from '/home/user/lib/python2.5/Satchmo-0.9_0-py2.5.egg/product/fixtures'.
+    Installed 16 object(s) from 3 fixture(s)
+
+    Synced:
+     > django.contrib.admin
+     > django.contrib.auth
+     > django.contrib.contenttypes
+     > django.contrib.sessions
+     > django.contrib.sites
+     > django.contrib.comments
+     > satchmo_store.shop
+     > keyedcache
+     > livesettings
+     > l10n
+     > south
+     > sorl.thumbnail
+     > satchmo_store.contact
+     > tax
+     > tax.modules.area
+     > tax.modules.percent
+     > shipping
+     > product
+     > payment
+     > payment.modules.giftcertificate
+     > satchmo_utils
+     > app_plugins
+     > singpost
+     > shop_ext
+     > satchmo_state
+
+    Not synced (use migrations):
+     -
+    (use ./manage.py migrate to migrate these)
+
+- Replace your Satchmo installation with the new version of it.
+
+- Since the database tables have already been created for your old (0.9)
+  Satchmo installation, you need to "fake" the initial migration, or else
+  South will try re-creating the database tables. Do it like so::
+
+    $ python manage.py migrate product --fake 0001
+
+    - Soft matched migration 0001 to 0001_initial.
+
+    Running migrations for product:
+     - Migrating forwards to 0001_initial.
+     > product: 0001_initial
+       (faked)
+
+- See list of migrations::
+
+    $ python manage.py migrate product --list
+
+     product
+      (*) 0001_initial
+      ( ) 0002_add_attributeoption
+      ( ) 0003_add_productattribute_option
+      ( ) 0004_remove_productattribute_name
+      ( ) 0005_fix_attributeoption_error_default_spelling
+      ( ) 0006_custom_textfield_add_constraint
+      ( ) 0007_add_discount_valid_products_field
+      ( ) 0008_remove_discount_validproducts_field
+      ( ) 0009_add_categoryattributes
+
+- Run the migrations::
+
+    $ python manage.py migrate product --db-dry-run # db untouched
+    $ python manage.py migrate product
+
+.. highlight:: python

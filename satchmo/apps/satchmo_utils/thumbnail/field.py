@@ -3,9 +3,11 @@ from django.db.models.fields.files import ImageField
 from livesettings import config_value, SettingNotSet
 from satchmo_utils.thumbnail.utils import remove_model_thumbnails, rename_by_field
 from satchmo_utils import normalize_dir
-import config
 import logging
 import os
+
+#ensure config is loaded
+import satchmo_utils.thumbnail.config
 
 log = logging.getLogger('thumbnail.fields')
 
@@ -16,7 +18,7 @@ def _delete(sender, instance=None, **kwargs):
                 remove_model_thumbnails(instance)
         else:
             remove_model_thumbnails(instance)
-        
+
 def upload_dir(instance, filename):
     raw = "images/"
 
@@ -26,12 +28,9 @@ def upload_dir(instance, filename):
         pass
     except ImportError, e:
         log.warn("Error getting upload_dir, OK if you are in SyncDB.")
-        
+
     updir = normalize_dir(raw)
     return os.path.join(updir, filename)
-        
-
-NOTSET = object()
 
 class ImageWithThumbnailField(ImageField):
     """ ImageField with thumbnail support
@@ -43,9 +42,9 @@ class ImageWithThumbnailField(ImageField):
 
     def __init__(self, verbose_name=None, name=None,
                  width_field=None, height_field=None,
-                 auto_rename=NOTSET, name_field=None, 
+                 auto_rename=None, name_field=None,
                  upload_to=upload_dir, **kwargs):
-                 
+
         self.auto_rename = auto_rename
 
         self.width_field, self.height_field = width_field, height_field
@@ -57,21 +56,22 @@ class ImageWithThumbnailField(ImageField):
                                                       **kwargs)
         self.name_field = name_field
         self.auto_rename = auto_rename
-        
+
     def _save_rename(self, instance, **kwargs):
         if hasattr(self, '_renaming') and self._renaming:
             return
-        if self.auto_rename == NOTSET:
-            try:
-                self.auto_rename = config_value('THUMBNAIL', 'RENAME_IMAGES')
-            except SettingNotSet:
-                self.auto_rename = False
-        
+        if self.auto_rename is None:
+            # if we get a SettingNotSet exception (even though we've already
+            # imported/loaded it), that's bad, so let it bubble up; don't try
+            # to guess a default (which should be set in the default config in
+            # the first place.)
+            self.auto_rename = config_value('THUMBNAIL', 'RENAME_IMAGES')
+
         image = getattr(instance, self.attname)
         if image and self.auto_rename:
             if self.name_field:
                 field = getattr(instance, self.name_field)
-                image = rename_by_field(image.path, '%s-%s-%s' \
+                image = rename_by_field(image.name, '%s-%s-%s' \
                                         % (instance.__class__.__name__,
                                            self.name,
                                            field
@@ -79,7 +79,7 @@ class ImageWithThumbnailField(ImageField):
                                         )
             else:
                 # XXX this needs testing, maybe it can generate too long image names (max is 100)
-                image = rename_by_field(image.path, '%s-%s-%s' \
+                image = rename_by_field(image.name, '%s-%s-%s' \
                                         % (instance.__class__.__name__,
                                            self.name,
                                            instance._get_pk_val()
@@ -95,3 +95,18 @@ class ImageWithThumbnailField(ImageField):
         signals.pre_delete.connect(_delete, sender=cls)
         signals.post_save.connect(self._save_rename, sender=cls)
 
+try:
+    # South introspection rules for our custom field.
+    from south.modelsinspector import add_introspection_rules
+
+    add_introspection_rules([(
+        (ImageWithThumbnailField, ),
+        [],
+        {
+            'auto_rename': ["auto_rename", {"default": None}],
+            'name_field': ["name_field", {"default": None}],
+            'auto_rename': ["auto_rename", {"default": None}],
+        },
+    )], ['satchmo_utils\.thumbnail\.field'])
+except ImportError:
+    pass

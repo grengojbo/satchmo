@@ -34,7 +34,12 @@ SITE_ID = 1
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-#Image files will be stored off of this path
+# Image files will be stored off of this path
+#
+# If you are using Windows, recommend using normalize_path() here
+#
+# from satchmo_utils.thumbnail import normalize_path
+# MEDIA_ROOT = normalize_path(os.path.join(DIRNAME, 'static/'))
 MEDIA_ROOT = os.path.join(DIRNAME, 'static/')
 
 # URL that handles the media served from MEDIA_ROOT.
@@ -79,6 +84,13 @@ TEMPLATE_CONTEXT_PROCESSORS = ('satchmo_store.shop.context_processors.settings',
 
 ROOT_URLCONF = ''
 
+TEMPLATE_DIRS = (
+    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
+    # Always use forward slashes, even on Windows.
+    # Don't forget to use absolute paths, not relative paths.
+    os.path.join(DIRNAME,'templates'),
+)
+
 INSTALLED_APPS = (
     'django.contrib.sites',
     'satchmo_store.shop',
@@ -106,9 +118,14 @@ INSTALLED_APPS = (
     #'satchmo_ext.recentlist',
     #'testimonials',
     'product',
+    'product.modules.configurable',
+    'product.modules.custom',
+    #'product.modules.downloadable',
+    #'product.modules.subscription',
     #'satchmo_ext.product_feeds',
     #'satchmo_ext.brand',
     'payment',
+    'payment.modules.dummy',
     #'payment.modules.purchaseorder',
     #'payment.modules.giftcertificate',
     #'satchmo_ext.wishlist',
@@ -140,6 +157,8 @@ SATCHMO_SETTINGS = {
     'MULTISHOP' : False,
     #'SHOP_URLS' : patterns('satchmo_store.shop.views',)
 }
+
+SKIP_SOUTH_TESTS=True
 
 # Load the local settings
 from local_settings import *

@@ -9,8 +9,8 @@
 
 {% block extra-head %}
 
-<script type="text/javascript" src="{{media_url}}js/jquery.js"></script>
-<script type="text/javascript" src="{{media_url}}js/jquery.form.js"></script>
+{% include "shop/_jquery.html" %}
+{% include "shop/_jquery_form.html" %}
 <script type="text/javascript" src="{{media_url}}js/satchmo_product.js"></script>
 {% blackbird_logging %}
 <script type="text/javascript">{# Javascript which is generated uniquely for each page #}
@@ -43,7 +43,7 @@ $(function() {
 {% with product.translated_attributes as atts %}{% if atts %}
 <p class="productattributes">
 {% for att in product.translated_attributes %}
-{{ att.name }}: {{ att.value }}<br/>
+{{ att.description }}: {{ att.value }}<br/>
 {% endfor %}
 </p>
 {% endif %}{% endwith %}
