@@ -208,10 +208,10 @@ satchmo_cart_details_query=django.dispatch.Signal()
 #:     for the current site.
 #:   :is_secure: A boolean representing weather or not SSL is enabled
 #:   :request: The ``HttpRequest`` object passed into the context processor
-#:   :login_url: The login url defined in settings.LOGIN_URL
-#:   :logout_url: The logout url defined in settings.LOGOUT_URL
+#:   :login_url: The login url defined in ``settings.LOGIN_URL``
+#:   :logout_url: The logout url defined in ``settings.LOGOUT_URL``
 #:   :sale: An instance of ``product.models.Discount`` if there is a current
-#:     sale, or None
+#:     sale, or ``None``
 satchmo_context = django.dispatch.Signal()
 
 #: Sent after each item from the cart is copied into an order.
@@ -232,6 +232,27 @@ satchmo_post_copy_item_to_order=django.dispatch.Signal()
 #: Sent by the order during the calculation of the total.
 #satchmo_shipping_price_query.send(order, adjustment=shipadjust)
 satchmo_shipping_price_query = django.dispatch.Signal()
+
+#: Sent to determine where to redirect a user for a ``DownloadableProduct``.
+#:
+#: :param sender: ``None``
+#: :type sender: ``None``
+#:
+#: :param file: The ``'file'`` field of the ``DownloadableProduct``.
+#: :type file: ``django.db.models.fields.files.FileField``
+#:
+#: :param product: The product which is being downloaded.
+#: :type product: ``product.models.DownloadableProduct``
+#:
+#: :param url_dict: A dictionary containing a single entry, ``'url'``, the URL
+#:   which the user will be redirected to. Listeners should modify this value
+#:   to change the redirect URL.
+#:
+#: .. Warning::
+#:    For a sane ``filename`` parameter in the ``Content-Disposition`` header,
+#:    users are cautioned against appending a trailing slash(``'/'``) to the
+#:    URL.
+sendfile_url_for_file = django.dispatch.Signal()
 
 #
 # Signals sent by email system
@@ -261,7 +282,7 @@ rendering_store_mail = django.dispatch.Signal()
 #: raised will be handled by ``send_store_mail()``; they should consequently
 #: raise ``ShouldNotSendMail`` to avoid re-sending the email.
 #:
-#: :param sender: Defaults to None, unless the sender argument to
+#: :param sender: Defaults to ``None``, unless the sender argument to
 #:   ``send_store_mail()`` is specified; see below.
 #:
 #: .. _send_mail_args:
