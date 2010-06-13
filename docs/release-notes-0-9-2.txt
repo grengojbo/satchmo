@@ -7,7 +7,10 @@ The full list of closed tickets can be viewed `here <http://www.bitbucket.org/ch
 
 New Features
 ------------
-
+- Display payment methods in emails
+- Update the default templates to show quick orders and category indexes
+- Ensure notes fields can be saved if they are included in the checkout process
+- Display country names instead of abbreviations in templates
 
 Translations
 ------------
@@ -16,3 +19,7 @@ Translations
 Bug Fixes
 ---------
 - Fix issue if Unicode characters in options
+- Fix issues with migrations and content types
+- Resolve Paypal unneeded dependency on subscription product
+- Make sure "all valid" discounts are correctly applied
+- Fix Wishlish ajax add view
