@@ -11,6 +11,7 @@ from django.core import urlresolvers
 from django.core.cache import cache
 from django.db import models
 from django.db.models import Q
+from django.utils.encoding import smart_str
 from django.utils.translation import get_language, ugettext, ugettext_lazy as _
 from l10n.utils import moneyfmt, lookup_translation
 from livesettings import config_value, SettingNotSet, config_value_safe
@@ -139,14 +140,13 @@ class Category(models.Model):
             if self.parent_id and self.parent != self:
                 img = self.parent.main_image
 
-        if not img:
+        if not img and config_value('PRODUCT', 'SHOW_NO_PHOTO_IN_CATEGORY'):
             #This should be a "Image Not Found" placeholder image
             try:
                 img = CategoryImage.objects.filter(category__isnull=True).order_by('sort')[0]
             except IndexError:
                 import sys
                 print >>sys.stderr, 'Warning: default category image not found - try syncdb'
-
         return img
 
     main_image = property(_get_mainImage)
@@ -597,6 +597,8 @@ class Discount(models.Model):
         """Tests if discount is valid for a single product"""
         if not product.is_discountable:
             return False
+        elif self.allValid:
+            return True
         p = self.valid_products.filter(id__exact = product.id)
         return p.count() > 0 or \
             (product.slug in self._valid_products_in_categories())
@@ -1545,7 +1547,7 @@ class TaxClass(models.Model):
         verbose_name_plural = _("Tax Classes")
 
 def make_option_unique_id(groupid, value):
-    return '%s-%s' % (str(groupid), str(value),)
+    return '%s-%s' % (smart_str(groupid), smart_str(value),)
 
 def round_cents(work):
     cents = Decimal("0.01")
