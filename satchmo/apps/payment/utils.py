@@ -12,17 +12,16 @@ log = logging.getLogger('payment.utils')
 def capture_authorizations(order):
     """Capture all outstanding authorizations on this order"""
     if order.authorized_remaining > Decimal('0'):
-        purchase = order.get_or_create_purchase()
-        for key, group in active_gateways():
-            gateway_settings = config_get(group, 'MODULE')
-            processor = get_gateway_by_settings(gateway_settings)
-            processor.capture_authorized_payments(purchase)
+        for authz in order.authorizations.filter(complete=False):
+            processor = get_processor_by_key('PAYMENT_%s' % authz.payment)
+            processor.capture_authorized_payments(order)
 
 def get_or_create_order(request, working_cart, contact, data):
     """Get the existing order from the session, else create using
     the working_cart, contact and data"""
     shipping = data.get('shipping', None)
     discount = data.get('discount', None)
+    notes = data.get('notes', None)
 
     try:
         order = Order.objects.from_request(request)
@@ -44,7 +43,7 @@ def get_or_create_order(request, working_cart, contact, data):
         order = Order(contact=contact)
 
     pay_ship_save(order, working_cart, contact,
-        shipping=shipping, discount=discount, update=update)
+        shipping=shipping, discount=discount, notes=notes, update=update)
     request.session['orderID'] = order.id
     return order
 
@@ -55,11 +54,16 @@ def get_gateway_by_settings(gateway_settings, settings={}):
     return processor_module.PaymentProcessor(settings=gateway_settings)
 
 def get_processor_by_key(key):
+    """
+    Returns an instance of a payment processor, referred to by *key*.
+
+    :param key: A string of the form 'PAYMENT_<PROCESSOR_NAME>'.
+    """
     payment_module = config_get_group(key)
     processor_module = payment_module.MODULE.load_module('processor')
     return processor_module.PaymentProcessor(payment_module)
 
-def pay_ship_save(new_order, cart, contact, shipping, discount, update=False):
+def pay_ship_save(new_order, cart, contact, shipping, discount, notes, update=False):
     """
     Save the order details, first removing all items if this is an update.
     """
@@ -77,7 +81,8 @@ def pay_ship_save(new_order, cart, contact, shipping, discount, update=False):
         new_order.discount_code = discount
     else:
         new_order.discount_code = ""
-
+    if notes:
+        new_order.notes = notes
     update_orderitems(new_order, cart, update=update)
 
 def update_orderitem_details(new_order_item, item):

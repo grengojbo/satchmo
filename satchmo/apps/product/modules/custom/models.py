@@ -46,7 +46,13 @@ class CustomProduct(models.Model):
         """
         from product.utils import serialize_options
 
-        context['options'] = serialize_options(self, selected_options)
+        options = serialize_options(self, selected_options)
+        if not 'options' in context:
+            context['options'] = options
+        else:
+            curr = list(context['options'])
+            curr.extend(list(options))
+            context['options'] = curr
 
         return context
 
@@ -98,10 +104,10 @@ class CustomProduct(models.Model):
         """
         return get_all_options(self, ids_only=True)
 
-    def save(self):
+    def save(self, **kwargs):
         if hasattr(self.product,'_sub_types'):
             del self.product._sub_types
-        super(CustomProduct, self).save()
+        super(CustomProduct, self).save(**kwargs)
 
 
     class Meta:

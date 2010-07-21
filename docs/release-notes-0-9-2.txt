@@ -1,0 +1,27 @@
+Satchmo Development Branch
+==========================
+
+These are the notes for the latest development version.
+The full list of closed tickets can be viewed `here <http://www.bitbucket.org/chris1610/satchmo/issues?status=resolved&milestone=0.9.2>`_
+
+
+New Features
+------------
+- Display payment methods in emails
+- Update the default templates to show quick orders and category indexes
+- Ensure notes fields can be saved if they are included in the checkout process
+- Display country names instead of abbreviations in templates
+- Update google analytics code to use latest tracker js
+- Add an unlimited downloads option for downloadable products
+
+Translations
+------------
+
+
+Bug Fixes
+---------
+- Fix issue if Unicode characters in options
+- Fix issues with migrations and content types
+- Resolve Paypal unneeded dependency on subscription product
+- Make sure "all valid" discounts are correctly applied
+- Fix Wishlish ajax add view

@@ -5,9 +5,10 @@ from django.db.models.fields.files import FileField
 from django.utils.encoding import smart_str
 from django.utils.hashcompat import sha_constructor
 from django.utils.translation import ugettext_lazy as _
-from livesettings import config_value_safe
+from livesettings import config_value
 from product import signals
 from product.models import Product
+import product.modules.downloadable.config
 from satchmo_store.shop.models import Order
 from satchmo_utils import normalize_dir
 import datetime
@@ -21,9 +22,11 @@ def get_product_types():
 
 
 def _protected_dir(instance, filename):
-    raw = config_value_safe('PRODUCT', 'PROTECTED_DIR', 'images/')
-    updir = normalize_dir(raw)
-    return os.path.normpath(os.path.join(updir, os.path.basename(filename)))
+    # if we get a SettingNotSet exception (even though we've already
+    # imported/loaded it), that's bad, so let it bubble up.
+    raw = config_value('PRODUCT', 'PROTECTED_DIR')
+    updir = os.path.normpath(normalize_dir(raw))
+    return os.path.join(updir, instance.file.field.get_filename(filename))
 
 class DownloadableProduct(models.Model):
     """
@@ -33,11 +36,11 @@ class DownloadableProduct(models.Model):
     file = FileField(_("File"), upload_to=_protected_dir)
     num_allowed_downloads = models.IntegerField(
         _("Num allowed downloads"),
-        help_text=_("Number of times link can be accessed."),
+        help_text=_("Number of times link can be accessed. Enter 0 for unlimited."),
         default=0)
     expire_minutes = models.IntegerField(
         _("Expire minutes"),
-        help_text=_("Number of minutes the link should remain active."),
+        help_text=_("Number of minutes the link should remain active. Enter 0 for unlimited."),
         default=0)
     active = models.BooleanField(_("Active"), help_text=_("Is this download currently active?"), default=True)
     is_shippable = False
@@ -82,10 +85,12 @@ class DownloadLink(models.Model):
         # Check num attempts and expire_minutes
         if not self.downloadable_product.active:
             return (False, _("This download is no longer active"))
-        if self.num_attempts >= self.downloadable_product.num_allowed_downloads:
+        maxattempts = self.downloadable_product.num_allowed_downloads
+        if maxattempts > 0 and self.num_attempts >= maxattempts:
             return (False, _("You have exceeded the number of allowed downloads."))
-        expire_time = datetime.timedelta(minutes=self.downloadable_product.expire_minutes) + self.time_stamp
-        if datetime.datetime.now() > expire_time:
+        expiremins = self.downloadable_product.expire_minutes
+        expire_time = datetime.timedelta(minutes=expiremins) + self.time_stamp
+        if expiremins > 0 and datetime.datetime.now() > expire_time:
             return (False, _("This download link has expired."))
         return (True, "")
 

@@ -66,6 +66,7 @@ TEMPLATE_LOADERS = (
 MIDDLEWARE_CLASSES = (
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.middleware.doc.XViewMiddleware",
@@ -111,6 +112,10 @@ INSTALLED_APPS = (
     'livesettings',
     'satchmo_store.contact',
     'product',
+    'product.modules.configurable',
+    #'product.modules.custom',
+    #'product.modules.downloadable',
+    #'product.modules.subscription',
     # ****
     # * Optional feature, product brands
     # * Uncomment below, and add the brand url in your satchmo_urls setting
