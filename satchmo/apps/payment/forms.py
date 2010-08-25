@@ -231,8 +231,8 @@ class PaymentContactInfoForm(PaymentMethodForm, ContactInfoForm):
             form_init.send(PaymentContactInfoForm, form=self)
 
         def save(self, request, *args, **kwargs):
-            contactid = super(PaymentContactInfoForm, self).save(*args, **kwargs)
             form_presave.send(PaymentContactInfoForm, form=self)
+            contactid = super(PaymentContactInfoForm, self).save(*args, **kwargs)
             contact = Contact.objects.get(pk=contactid)
             cart = kwargs.get('cart', None)
             if not cart:
@@ -333,11 +333,17 @@ class SimplePayShipForm(forms.Form):
                         shipping_dict = {cheapshipping: shipping_dict[cheapshipping]}
             except Discount.DoesNotExist:
                 pass
-
-        # possibly hide the shipping
+        
+        # possibly hide the shipping based on store config
         shiphide = config_value('SHIPPING','HIDING')
-
-        if shiphide in ('YES', 'DESCRIPTION') and len(shipping_choices) == 1:
+        # Handle a partial payment and make sure we don't show a shipping choice after one has
+        # already been chosen
+        if self.order.is_partially_paid and shipping_dict.get(self.order.shipping_model, False):
+            self.fields['shipping'] = forms.CharField(max_length=30, initial=self.order.shipping_model,
+                widget=forms.HiddenInput(attrs={'value' : shipping_choices[0][0]}))
+            self.shipping_hidden = True
+        # Possibly hide if there is only 1 choise
+        elif shiphide in ('YES', 'DESCRIPTION') and len(shipping_choices) == 1:
             self.fields['shipping'] = forms.CharField(max_length=30, initial=shipping_choices[0][0],
                 widget=forms.HiddenInput(attrs={'value' : shipping_choices[0][0]}))
             if shiphide == 'DESCRIPTION':
@@ -354,9 +360,8 @@ class SimplePayShipForm(forms.Form):
                 if cheapshipping is not None:
                     self.fields['shipping'].initial = cheapshipping
             self.shipping_hidden = False
-
+                
         self.shipping_dict = shipping_dict
-
         form_init.send(SimplePayShipForm, form=self)
 
     def clean_shipping(self):
