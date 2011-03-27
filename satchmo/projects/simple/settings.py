@@ -14,13 +14,17 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'mysql'      # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
-# The following variables should be configured in your local_settings.py file
-#DATABASE_NAME = ''             # Or path to database file if using sqlite3.
-#DATABASE_USER = ''             # Not used with sqlite3.
-#DATABASE_PASSWORD = ''         # Not used with sqlite3.
-DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
-DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
+DATABASES = {
+    'default': {
+        'NAME': 'dbname',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': 'username',
+        'PASSWORD': 'passwd',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        #'OPTIONS': { "init_command": "SET FOREIGN_KEY_CHECKS = 0",},
+    }
+}
 
 # Local time zone for this installation. All choices can be found here:
 # http://www.postgresql.org/docs/current/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE
@@ -36,25 +40,27 @@ SITE_ID = 1
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
 #Image files will be stored off of this path
-MEDIA_ROOT = os.path.join(DIRNAME, 'static/')
-#MEDIA_ROOT = "/static"
-# URL that handles the media served from MEDIA_ROOT.
-# Example: "http://media.lawrence.com"
-#MEDIA_URL = 'site_media'
-MEDIA_URL="/static/"
+MEDIA_ROOT = os.path.normpath(os.path.join(DIRNAME, 'media/'))
+STATIC_ROOT = os.path.normpath(os.path.join(DIRNAME, 'media/static/'))
+MEDIA_URL = '/media/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = (
+    os.path.normpath(os.path.join(DIRNAME, '../../static/')),
+)
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/media/'
+#ADMIN_MEDIA_PREFIX = '/media/'
+ADMIN_MEDIA_PREFIX = STATIC_URL + "grappelli/"
+ADMIN_MEDIA_ROOT = os.path.join(DIRNAME, 'media/static/grappelli/')
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = ''
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
-#     'django.template.loaders.eggs.load_template_source',
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -76,7 +82,10 @@ MIDDLEWARE_CLASSES = (
 # NOTE: If you enable the recent_products context_processor, you MUST have the
 # 'satchmo_ext.recentlist' app installed.
 TEMPLATE_CONTEXT_PROCESSORS = ('satchmo_store.shop.context_processors.settings',
-                               'django.core.context_processors.auth',
+                               'django.contrib.auth.context_processors.auth',
+                               'django.core.context_processors.i18n',
+                                'django.core.context_processors.media',
+                                'django.core.context_processors.static',
                                #'satchmo_ext.recentlist.context_processors.recent_products',
                                )
 
@@ -84,6 +93,7 @@ TEMPLATE_CONTEXT_PROCESSORS = ('satchmo_store.shop.context_processors.settings',
 ROOT_URLCONF = 'simple.urls'
 
 INSTALLED_APPS = (
+    'grappelli',
     'django.contrib.sites',
     'satchmo_store.shop',
     'django.contrib.admin',
@@ -93,6 +103,7 @@ INSTALLED_APPS = (
     'django.contrib.comments',
     'django.contrib.sessions',
     'django.contrib.sitemaps',
+    'django.contrib.staticfiles',
     'registration',
     'sorl.thumbnail',
     'south',
@@ -105,6 +116,7 @@ INSTALLED_APPS = (
     'tax.modules.no',
     'tax.modules.area',
     'tax.modules.percent',
+    #
     'shipping',
     #'satchmo_store.contact.supplier',
     #'shipping.modules.tiered',
@@ -128,7 +140,7 @@ INSTALLED_APPS = (
     'satchmo_ext.satchmo_toolbar',
     'satchmo_utils',
     #'shipping.modules.tieredquantity',
-    #'django_extensions',    # dependency on  https://github.com/django-extensions/django-extensions/
+    'django_extensions',    # dependency on  https://github.com/django-extensions/django-extensions/
     #'satchmo_ext.tieredpricing',
     #'typogrify',            # dependency on  http://code.google.com/p/typogrify/
     #'debug_toolbar',

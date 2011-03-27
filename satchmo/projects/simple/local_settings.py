@@ -17,20 +17,20 @@ DIRNAME = os.path.dirname(os.path.abspath(__file__))
 _parent = lambda x: os.path.normpath(os.path.join(x, '..'))
 SATCHMO_DIRNAME = _parent(_parent(DIRNAME))
     
-# since we don't have any custom media for this project, lets just use Satchmo's
-MEDIA_ROOT = os.path.join(SATCHMO_DIRNAME, 'static/')
+TIME_ZONE = 'Europe/Kiev'
+LANGUAGE_CODE = 'ru-ru'
 
 gettext_noop = lambda s:s
 
 LANGUAGE_CODE = 'en-us'
 LANGUAGES = (
    ('en', gettext_noop('English')),
+   ('ru', gettext_noop('Russian')),
 )
 
 # Only set these if Satchmo is part of another Django project
 #These are used when loading the test data
 SITE_NAME = "simple"
-MEDIA_ROOT = os.path.join(SATCHMO_DIRNAME, 'static/')
 DJANGO_PROJECT = 'simple'
 DJANGO_SETTINGS_MODULE = 'simple.settings'
 
@@ -39,8 +39,13 @@ TEMPLATE_DIRS = (
     os.path.join(DIRNAME, "templates"),
 )
 
-DATABASE_ENGINE = 'sqlite3'
-DATABASE_NAME = os.path.join(DIRNAME, 'simple.db')
+DATABASES = {
+    'default': {
+        'NAME': os.path.join(DIRNAME, 'simple.db'),
+        'ENGINE': 'django.db.backends.sqlite3',
+    }
+}
+
 SECRET_KEY = 'EXAMPLE SECRET KEY'
 
 ##### For Email ########
@@ -50,6 +55,8 @@ SECRET_KEY = 'EXAMPLE SECRET KEY'
 #EMAIL_HOST_USER = 'your user here'
 #EMAIL_HOST_PASSWORD = 'your password'
 #EMAIL_USE_TLS = True
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 1025
 
 #These are used when loading the test data
 SITE_DOMAIN = "localhost"
@@ -72,6 +79,61 @@ logging.basicConfig(level=logging.DEBUG,
 #fileLog.setLevel(logging.DEBUG)
 # add the handler to the root logger
 #logging.getLogger('').addHandler(fileLog)
-logging.getLogger('keyedcache').setLevel(logging.INFO)
-logging.getLogger('l10n').setLevel(logging.INFO)
+LOGGING = {
+  'version': 1,
+  'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+  'handlers': {
+        'null': {
+            'level':'DEBUG',
+            'class':'django.utils.log.NullHandler',
+        },
+        'console':{
+            'level':'DEBUG',
+            'class':'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            #'filters': ['special']
+        }
+    },
+  'loggers': {
+#        'django': {
+#            'handlers':['null'],
+#            'propagate': True,
+#            'level':'INFO',
+#        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            #'filters': ['special']
+        },
+        'keyedcache': {
+            'handlers': ['console', 'mail_admins'],
+            'level': 'INFO',
+            #'filters': ['special']
+        },
+        'l10n': {
+            'handlers': ['console', 'mail_admins'],
+            'level': 'INFO',
+            #'filters': ['special']
+        }
+    }
+}
+#logging.getLogger('keyedcache').setLevel(logging.INFO)
+#logging.getLogger('l10n').setLevel(logging.INFO)
 logging.info("Satchmo Started")
